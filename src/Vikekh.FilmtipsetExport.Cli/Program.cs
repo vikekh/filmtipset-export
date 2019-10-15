@@ -21,16 +21,20 @@ namespace Vikekh.FilmtipsetExport.Cli
         private readonly ILogger<Program> _logger;
         private readonly IMovieService _movieService;
         private readonly IExportService _exportService;
+        private readonly IScraperService _scraperService;
+        private readonly IHttpService _httpService;
 
         public string File { get; } = @"C:\Users\Viktor\.ftexp\Movies.json";
 
         public string Output { get; } = @"Movies.csv";
 
-        public Program(ILogger<Program> logger, IMovieService movieService, IExportService exportService)
+        public Program(ILogger<Program> logger, IMovieService movieService, IExportService exportService, IScraperService scraperService, IHttpService httpService)
         {
             _logger = logger;
             _movieService = movieService;
             _exportService = exportService;
+            _scraperService = scraperService;
+            _httpService = httpService;
 
             _logger.LogInformation("Constructed!");
         }
@@ -43,34 +47,39 @@ namespace Vikekh.FilmtipsetExport.Cli
                     //builder.AddConsole();
                 })
                 .ConfigureServices((context, services) => {
-                    services.AddHttpClient<IScraperService, ScraperService>();
+                    services.AddHttpClient<IHttpService, HttpService>();
                     services.AddTransient<IMovieService, MovieService>()
                         .AddTransient<IExportService, ExportService>()
+                        .AddTransient<IScraperService, ScraperService>()
                         .AddSingleton<IConsole>(PhysicalConsole.Singleton);
                 })
                 .RunCommandLineApplicationAsync<Program>(args);
         }
 
-        private void OnExecute()
+        private async Task OnExecuteAsync()
         {
             _movieService.Init(File);
-            var movies = _movieService.GetList();
-            var export = new List<string>();
-            export.Add("imdbID,Rating,WatchedDate");
-            export.AddRange(movies.Where(movie => movie.ImdbId != null)
-                .Select(movie => $"{movie.ImdbId},{movie.Grade},{movie.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}")
-            );
+            await _movieService.UpdateAsync("vieekk");
+            //Console.WriteLine(movies.First().Title);
 
-            var unmatched = movies.Where(movie => movie.ImdbId == null);
-            Console.WriteLine("Unmatched:");
-            var i = 1;
-            foreach (var movie in unmatched)
-            {
-                Console.WriteLine($"{ i.ToString("0000")}. Title: {movie.Title} Path: {movie.Url} Grade: {movie.Grade} Date: {movie.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}");
-                i++;
-            }
+            //_movieService.Init(File);
+            //var movies = _movieService.GetList();
+            //var export = new List<string>();
+            //export.Add("imdbID,Rating,WatchedDate");
+            //export.AddRange(movies.Where(movie => movie.ImdbId != null)
+            //    .Select(movie => $"{movie.ImdbId},{movie.Grade},{movie.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}")
+            //);
 
-            _exportService.WriteCsv(export, Output);
+            //var unmatched = movies.Where(movie => movie.ImdbId == null);
+            //Console.WriteLine("Unmatched:");
+            //var i = 1;
+            //foreach (var movie in unmatched)
+            //{
+            //    Console.WriteLine($"{ i.ToString("0000")}. Title: {movie.Title} Path: {movie.Url} Grade: {movie.Grade} Date: {movie.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}");
+            //    i++;
+            //}
+
+            //_exportService.WriteCsv(export, Output);
 
             // _movieService.Update("vieekk");
             // _movieService.Save(File);

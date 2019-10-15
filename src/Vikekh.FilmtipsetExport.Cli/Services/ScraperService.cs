@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
+using Vikekh.FilmtipsetExport.Cli.Extensions;
 using Vikekh.FilmtipsetExport.Cli.Interfaces;
 using Vikekh.FilmtipsetExport.Cli.Models;
 
@@ -11,62 +12,47 @@ namespace Vikekh.FilmtipsetExport.Cli.Services
 {
     public class ScraperService : IScraperService
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpService _httpService;
 
-        public ScraperService(HttpClient httpClient)
+        public ScraperService(IHttpService httpService)
         {
-            _httpClient = httpClient;
-            _httpClient.BaseAddress = new System.Uri("https://www.filmtipset.se/");
+            _httpService = httpService;
         }
 
-        public async Task<IEnumerable<Movie>> GetMovieGradesAsync(string username, int page)
+        public async Task<IEnumerable<Movie>> GetMovieRatingsAsync(string username, int page)
         {
-            var response = await _httpClient.GetAsync($"/betyg/{username}?p={page}");
-
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadAsStringAsync();
-
+            var html = await _httpService.GetMovieRatingsAsync(username, page);
             var htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(result);
-
-            var table = htmlDocument.DocumentNode.SelectNodes("//table[@class='list']").FirstOrDefault();
-
-            if (table == null) return null;
-
+            htmlDocument.LoadHtml(html);
             var movies = new List<Movie>();
-
-            foreach (var row in table.SelectNodes("tr"))
+            
+            foreach (var node in htmlDocument.DocumentNode.GetListNodes())
             {
-                var cells = row.SelectNodes("td");
                 movies.Add(new Movie
                 {
-                    Date = DateTime.Parse(cells[1].InnerText),
-                    Grade = cells[2].SelectNodes("//i[contains(concat(' ', normalize-space(@class), ' '), ' fa-star ')]").Count,
-                    Title = cells[0].FirstChild.InnerText,
-                    Url = cells[0].FirstChild.Attributes["href"].Value
+                    FilmtipsetSlug = node.GetFilmtipsetSlug(),
+                    FilmtipsetTitle = node.GetFilmtipsetTitle(),
+                    Rating = node.GetRating(),
+                    WatchedDate = node.GetWatchedDate()
                 });
             }
 
             return movies;
         }
 
-        public async Task<string> GetMovieAsync(string path)
+        public async Task<Movie> GetMovieDetailsAsync(Movie movie)
         {
-            var response = await _httpClient.GetAsync(path);
-
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadAsStringAsync();
-
+            var html = await _httpService.GetMovieDetailsAsync(movie.FilmtipsetSlug);
             var htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(result);
+            htmlDocument.LoadHtml(html);
 
-            var links = htmlDocument.DocumentNode.SelectNodes("//a[starts-with(@href, 'https://www.imdb.com/title/')]");
+            if (movie == null) movie = new Movie();
 
-            if (links.Count != 1) return null;
+            movie.ImdbId = htmlDocument.DocumentNode.GetImdbId();
+            movie.Year = htmlDocument.DocumentNode.GetYear();
 
-            return links[0].Attributes["href"].Value.Replace("https://www.imdb.com/title/", string.Empty);
+
+            return movie;
         }
     }
 }

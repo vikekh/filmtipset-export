@@ -6,8 +6,8 @@ namespace Vikekh.FilmtipsetExport.Cli.Interfaces
 {
     public interface IScraperService
     {
-        public Task<IEnumerable<Movie>> GetMovieGradesAsync(string username, int page);
+        public Task<IEnumerable<Movie>> GetMovieRatingsAsync(string username, int page);
 
-        public Task<string> GetMovieAsync(string path);
+        public Task<Movie> GetMovieDetailsAsync(Movie movie);
     }
 }

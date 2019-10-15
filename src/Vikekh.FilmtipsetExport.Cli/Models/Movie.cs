@@ -6,14 +6,20 @@ namespace Vikekh.FilmtipsetExport.Cli.Models
 {
     public class Movie
     {
-        public DateTime Date { get; set; }
+        public string FilmtipsetSlug { get; set; }
 
-        public int Grade { get; set; }
+        public string FilmtipsetTitle { get; set; }
+
+        public string ImdbId { get; set; }
+
+        public int Rating { get; set; }
 
         public string Title { get; set; }
 
         public string Url { get; set; }
 
-        public string ImdbId { get; set; }
+        public DateTime WatchedDate { get; set; }
+
+        public int Year { get; set; }
     }
 }
