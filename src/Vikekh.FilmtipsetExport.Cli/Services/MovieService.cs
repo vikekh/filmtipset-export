@@ -45,12 +45,14 @@ namespace Vikekh.FilmtipsetExport.Cli.Services
             return new MergeMovieMapper().Map(movie, new MovieDetailsScrapeToMovieMapper().Map(movieDetails));
         }
 
+        public async Task<Movie> GetMovie()
+
         public async Task UpdateDetailsAsync()
         {
-            foreach (var movie in Movies.Where(movie => movie.ImdbId == null))
+            foreach (var movie in Movies.Keys))
             {
                 var index = Movies.IndexOf(movie);
-                Movies[index] = await Update(movie);
+                Movies[ = await Update(movie);
             }
         }
 
