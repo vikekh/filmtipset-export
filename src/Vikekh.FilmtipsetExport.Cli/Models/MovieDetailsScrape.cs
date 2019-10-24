@@ -4,15 +4,9 @@ using System.Text;
 
 namespace Vikekh.FilmtipsetExport.Cli.Models
 {
-    public class Movie
+    public class MovieDetailsScrape
     {
         public string ImdbId { get; set; }
-
-        public IEnumerable<MovieRating> Ratings { get; set; }
-
-        public string Slug { get; set; }
-
-        public string SwedishTitle { get; set; }
 
         public string Title { get; set; }
 

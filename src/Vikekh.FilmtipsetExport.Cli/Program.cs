@@ -22,19 +22,17 @@ namespace Vikekh.FilmtipsetExport.Cli
         private readonly IMovieService _movieService;
         private readonly IExportService _exportService;
         private readonly IScraperService _scraperService;
-        private readonly IHttpService _httpService;
 
         public string File { get; } = @"C:\Users\Viktor\.ftexp\Movies.json";
 
         public string Output { get; } = @"Movies.csv";
 
-        public Program(ILogger<Program> logger, IMovieService movieService, IExportService exportService, IScraperService scraperService, IHttpService httpService)
+        public Program(ILogger<Program> logger, IMovieService movieService, IExportService exportService/*, IScraperService scraperService*/)
         {
             _logger = logger;
             _movieService = movieService;
             _exportService = exportService;
-            _scraperService = scraperService;
-            _httpService = httpService;
+            //_scraperService = scraperService;
 
             _logger.LogInformation("Constructed!");
         }
@@ -47,10 +45,9 @@ namespace Vikekh.FilmtipsetExport.Cli
                     //builder.AddConsole();
                 })
                 .ConfigureServices((context, services) => {
-                    services.AddHttpClient<IHttpService, HttpService>();
+                    services.AddHttpClient<IScraperService, ScraperService>();
                     services.AddTransient<IMovieService, MovieService>()
                         .AddTransient<IExportService, ExportService>()
-                        .AddTransient<IScraperService, ScraperService>()
                         .AddSingleton<IConsole>(PhysicalConsole.Singleton);
                 })
                 .RunCommandLineApplicationAsync<Program>(args);
@@ -58,7 +55,7 @@ namespace Vikekh.FilmtipsetExport.Cli
 
         private async Task OnExecuteAsync()
         {
-            _movieService.Init(File);
+            //_movieService.Init(File);
             await _movieService.UpdateAsync("vieekk");
             //Console.WriteLine(movies.First().Title);
 

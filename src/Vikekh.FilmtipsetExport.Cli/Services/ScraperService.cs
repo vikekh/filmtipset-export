@@ -1,58 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using HtmlAgilityPack;
-using Vikekh.FilmtipsetExport.Cli.Extensions;
 using Vikekh.FilmtipsetExport.Cli.Interfaces;
+using Vikekh.FilmtipsetExport.Cli.Mappers;
 using Vikekh.FilmtipsetExport.Cli.Models;
 
 namespace Vikekh.FilmtipsetExport.Cli.Services
 {
     public class ScraperService : IScraperService
     {
-        private readonly IHttpService _httpService;
+        private readonly HttpClient _httpClient;
 
-        public ScraperService(IHttpService httpService)
+        public ScraperService(HttpClient httpClient)
         {
-            _httpService = httpService;
+            _httpClient = httpClient;
+            _httpClient.BaseAddress = new System.Uri("https://www.filmtipset.se/");
         }
 
-        public async Task<IEnumerable<Movie>> GetMovieRatingsAsync(string username, int page)
+        public async Task<MovieDetailsScrape> GetMovieDetailsAsync(string slug)
         {
-            var html = await _httpService.GetMovieRatingsAsync(username, page);
-            var htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(html);
-            var movies = new List<Movie>();
-            
-            foreach (var node in htmlDocument.DocumentNode.GetListNodes())
-            {
-                movies.Add(new Movie
-                {
-                    FilmtipsetSlug = node.GetFilmtipsetSlug(),
-                    FilmtipsetTitle = node.GetFilmtipsetTitle(),
-                    Rating = node.GetRating(),
-                    WatchedDate = node.GetWatchedDate()
-                });
-            }
-
-            return movies;
+            var response = await _httpClient.GetAsync($"/film/{slug}");
+            response.EnsureSuccessStatusCode();
+            var html = await response.Content.ReadAsStringAsync();
+            return new MovieDetailsHtmlMapper().Map(html);
         }
 
-        public async Task<Movie> GetMovieDetailsAsync(Movie movie)
+        public async Task<IEnumerable<MovieRatingScrape>> GetMovieRatingsAsync(string username, int page)
         {
-            var html = await _httpService.GetMovieDetailsAsync(movie.FilmtipsetSlug);
-            var htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(html);
-
-            if (movie == null) movie = new Movie();
-
-            movie.ImdbId = htmlDocument.DocumentNode.GetImdbId();
-            movie.Year = htmlDocument.DocumentNode.GetYear();
-
-
-            return movie;
+            var response = await _httpClient.GetAsync($"/betyg/{username}?p={page}");
+            response.EnsureSuccessStatusCode();
+            var html = await response.Content.ReadAsStringAsync();
+            return new MovieRatingsHtmlMapper().Map(html);
         }
     }
 }

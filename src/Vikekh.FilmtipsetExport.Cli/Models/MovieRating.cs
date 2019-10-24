@@ -4,7 +4,10 @@ using System.Text;
 
 namespace Vikekh.FilmtipsetExport.Cli.Models
 {
-    class MoviePage
+    public class MovieRating
     {
+        public DateTime Date { get; set; }
+
+        public int Rating { get; set; }
     }
 }

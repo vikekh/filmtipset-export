@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Vikekh.FilmtipsetExport.Cli.Models;
 
@@ -6,8 +7,8 @@ namespace Vikekh.FilmtipsetExport.Cli.Interfaces
 {
     public interface IScraperService
     {
-        public Task<IEnumerable<Movie>> GetMovieRatingsAsync(string username, int page);
+        public Task<MovieDetailsScrape> GetMovieDetailsAsync(string slug);
 
-        public Task<Movie> GetMovieDetailsAsync(Movie movie);
+        public Task<IEnumerable<MovieRatingScrape>> GetMovieRatingsAsync(string username, int page);
     }
 }

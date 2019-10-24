@@ -7,60 +7,71 @@ using Vikekh.FilmtipsetExport.Cli.Models;
 using Vikekh.FilmtipsetExport.Cli.Interfaces;
 using System.Linq;
 using System.Threading.Tasks;
+using Vikekh.FilmtipsetExport.Cli.Mappers;
 
 namespace Vikekh.FilmtipsetExport.Cli.Services
 {
     public class MovieService : IMovieService
     {
-        private readonly IHttpService _httpService;
         private readonly IScraperService _scraperService;
 
-        private IDictionary<string, Movie> Movies { get; set; }
+        public IDictionary<string, Movie> Movies { get; private set; }
 
-        public MovieService(IHttpService httpService, IScraperService scraperService)
+        public MovieService(IScraperService scraperService)
         {
-            _httpService = httpService;
             _scraperService = scraperService;
-            Movies = new Dictionary<string, Movie>();
-        }
-
-        public void Add(Movie movie)
-        {
-            Movies.Add(movie.FilmtipsetSlug, movie);
-        }
-
-        public void Add(IEnumerable<Movie> movies)
-        {
-            foreach (var movie in movies)
-            {
-                Add(movie);
-            }
+            Movies = new List<Movie>();
         }
 
         public IEnumerable<Movie> GetList()
         {
             // TODO: clone
-            return Movies.Values.ToList().OrderByDescending(movie => movie.WatchedDate);
+            return Movies.ToList().OrderByDescending(movie => movie.Ratings?.OrderByDescending(movieRating => movieRating.Date).FirstOrDefault());
         }
 
         public void Init(string path)
         {
-            using (var file = new StreamReader(path))
+            //using (var file = new StreamReader(path))
+            //{
+            //    var serializer = new JsonSerializer();
+            //    var movies = (IEnumerable<Movie>)serializer.Deserialize(file, typeof(IEnumerable<Movie>));
+            //    Movies.ToList().
+            //}
+        }
+
+        public async Task<Movie> Update(Movie movie)
+        {
+            var movieDetails = await _scraperService.GetMovieDetailsAsync(movie.Slug);
+            return new MergeMovieMapper().Map(movie, new MovieDetailsScrapeToMovieMapper().Map(movieDetails));
+        }
+
+        public async Task UpdateDetailsAsync()
+        {
+            foreach (var movie in Movies.Where(movie => movie.ImdbId == null))
             {
-                var serializer = new JsonSerializer();
-                var movies = (IEnumerable<Movie>)serializer.Deserialize(file, typeof(IEnumerable<Movie>));
-                Add(movies);
+                var index = Movies.IndexOf(movie);
+                Movies[index] = await Update(movie);
             }
         }
 
         public async Task UpdateAsync(string username)
         {
-            for (var i = 0; i <= i; i++)
+            for (var i = 0; i <= 0; i++)
             {
-                var movies = await _scraperService.GetMovieRatingsAsync(username, i);
-                await _scraperService.GetMovieDetailsAsync(movies.First());
-                Add(movies);
+                var movieRatings = await _scraperService.GetMovieRatingsAsync(username, i);
+                var j = 0;
+
+                foreach (var movieRating in movieRatings)
+                {
+                    if (j == 5) break;
+
+                    var movie = new MovieRatingScrapeToMovieMapper().Map(movieRating);
+                    Movies.Add(movie.Slug, movie);
+                    j++;
+                }
             }
+
+            await UpdateDetailsAsync();
         }
 
         public void Save(string path)
