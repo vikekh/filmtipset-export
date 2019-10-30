@@ -6,14 +6,14 @@ using Vikekh.FilmtipsetExport.Cli.Models;
 
 namespace Vikekh.FilmtipsetExport.Cli.Mappers
 {
-    public class MovieDetailsScrapeToMovieMapper : MapperBase<MovieDetailsScrape, Movie>
+    public class MovieDetailsMapper : MapperBase<MovieDetailsPage, Movie>
     {
-        public override MovieDetailsScrape Map(Movie item)
+        public override MovieDetailsPage Map(Movie item)
         {
             throw new NotSupportedException();
         }
 
-        public override Movie Map(MovieDetailsScrape item)
+        public override Movie Map(MovieDetailsPage item)
         {
             return new Movie
             {

@@ -18,20 +18,20 @@ namespace Vikekh.FilmtipsetExport.Cli.Services
             _httpClient.BaseAddress = new System.Uri("https://www.filmtipset.se/");
         }
 
-        public async Task<MovieDetailsScrape> GetMovieDetailsAsync(string slug)
+        public async Task<MovieDetailsPage> GetMovieDetailsPageAsync(string slug)
         {
             var response = await _httpClient.GetAsync($"/film/{slug}");
             response.EnsureSuccessStatusCode();
             var html = await response.Content.ReadAsStringAsync();
-            return new MovieDetailsHtmlMapper().Map(html);
+            return new MovieDetailsPageHtmlMapper().Map(html);
         }
 
-        public async Task<IEnumerable<MovieRatingScrape>> GetMovieRatingsAsync(string username, int page)
+        public async Task<IEnumerable<MovieRatingsPageItem>> GetMovieRatingsPageAsync(string username, int page)
         {
             var response = await _httpClient.GetAsync($"/betyg/{username}?p={page}");
             response.EnsureSuccessStatusCode();
             var html = await response.Content.ReadAsStringAsync();
-            return new MovieRatingsHtmlMapper().Map(html);
+            return new MovieRatingsPageHtmlMapper().Map(html);
         }
     }
 }

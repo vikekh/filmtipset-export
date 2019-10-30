@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Vikekh.FilmtipsetExport.Cli.Models
 {
-    public class MovieRatingScrape
+    public class MovieRatingsPageItem
     {
         public int Rating { get; set; }
         

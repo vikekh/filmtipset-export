@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Vikekh.FilmtipsetExport.Cli.Models
 {
-    public class MovieDetailsScrape
+    public class MovieDetailsPage
     {
         public string ImdbId { get; set; }
 

@@ -20,60 +20,26 @@ namespace Vikekh.FilmtipsetExport.Cli.Services
         public MovieService(IScraperService scraperService)
         {
             _scraperService = scraperService;
-            Movies = new List<Movie>();
-        }
-
-        public IEnumerable<Movie> GetList()
-        {
-            // TODO: clone
-            return Movies.ToList().OrderByDescending(movie => movie.Ratings?.OrderByDescending(movieRating => movieRating.Date).FirstOrDefault());
+            Movies = new Dictionary<string, Movie>();
         }
 
         public void Init(string path)
         {
-            //using (var file = new StreamReader(path))
-            //{
-            //    var serializer = new JsonSerializer();
-            //    var movies = (IEnumerable<Movie>)serializer.Deserialize(file, typeof(IEnumerable<Movie>));
-            //    Movies.ToList().
-            //}
-        }
-
-        public async Task<Movie> Update(Movie movie)
-        {
-            var movieDetails = await _scraperService.GetMovieDetailsAsync(movie.Slug);
-            return new MergeMovieMapper().Map(movie, new MovieDetailsScrapeToMovieMapper().Map(movieDetails));
-        }
-
-        public async Task<Movie> GetMovie()
-
-        public async Task UpdateDetailsAsync()
-        {
-            foreach (var movie in Movies.Keys))
+            using (var file = new StreamReader(path))
             {
-                var index = Movies.IndexOf(movie);
-                Movies[ = await Update(movie);
-            }
-        }
-
-        public async Task UpdateAsync(string username)
-        {
-            for (var i = 0; i <= 0; i++)
-            {
-                var movieRatings = await _scraperService.GetMovieRatingsAsync(username, i);
-                var j = 0;
-
-                foreach (var movieRating in movieRatings)
+                var serializer = new JsonSerializer();
+                var movies = (IEnumerable<Movie>)serializer.Deserialize(file, typeof(IEnumerable<Movie>));
+                
+                foreach (var movie in movies)
                 {
-                    if (j == 5) break;
+                    if (movie.Slug == null)
+                    {
+                        throw new Exception();
+                    }
 
-                    var movie = new MovieRatingScrapeToMovieMapper().Map(movieRating);
                     Movies.Add(movie.Slug, movie);
-                    j++;
                 }
             }
-
-            await UpdateDetailsAsync();
         }
 
         public void Save(string path)
@@ -81,7 +47,55 @@ namespace Vikekh.FilmtipsetExport.Cli.Services
             using (var file = new StreamWriter(path, false))
             {
                 var serializer = new JsonSerializer();
-                serializer.Serialize(file, GetList());
+                serializer.Serialize(file, Movies.Values.OrderByDescending(movie => movie.Ratings.FirstOrDefault()?.Date));
+            }
+        }
+
+        public async Task UpdateMovieAsync(Movie movie)
+        {
+            var movieDetailsPage = await _scraperService.GetMovieDetailsPageAsync(movie.Slug);
+            var updatedMovie = new MovieDetailsMapper().Map(movieDetailsPage);
+            new MergeMovieMapper().Map(movie, updatedMovie);
+        }
+
+        public async Task UpdateMoviesAsync()
+        {
+            var i = 0;
+
+            foreach (var item in Movies.Where(item => item.Value?.ImdbId == null))
+            {
+                if (i == 1000) break;
+
+                try
+                {
+                    Console.WriteLine($"Updating movie {item.Key}");
+                    await UpdateMovieAsync(item.Value);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Updating movie {item.Key} failed");
+                }
+                
+                Console.WriteLine($"{i}");
+                i++;
+            }
+        }
+
+        public async Task UpdateMovieRatingsAsync(string username)
+        {
+            for (var i = 0; i <= 37; i++)
+            {
+                var movieRatingsPage = await _scraperService.GetMovieRatingsPageAsync(username, i);
+                var j = 0;
+
+                foreach (var movieRatingsPageItem in movieRatingsPage)
+                {
+                    //if (j == 5) break;
+
+                    var movie = new MovieRatingMapper().Map(movieRatingsPageItem);
+                    Movies.Add(movie.Slug, movie);
+                    j++;
+                }
             }
         }
     }

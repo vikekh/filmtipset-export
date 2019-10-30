@@ -10,9 +10,7 @@ namespace Vikekh.FilmtipsetExport.Cli.Mappers
     {
         private static object GetDefaultValue(Type type)
         {
-            if (type.IsValueType) return Activator.CreateInstance(type);
-
-            return null;
+            return type.IsValueType ? Activator.CreateInstance(type) : null;
         }
 
         public override (Movie, Movie) Map(Movie item)
@@ -27,26 +25,19 @@ namespace Vikekh.FilmtipsetExport.Cli.Mappers
 
         public Movie Map(Movie movie1, Movie movie2)
         {
-            var movie = new Movie();
             var properties = typeof(Movie).GetProperties();
 
             foreach (var property in properties)
             {
-                var value1 = property.GetValue(movie1);
-                var value2 = property.GetValue(movie2);
+                var value = property.GetValue(movie2);
 
-                if (value1 != GetDefaultValue(property.PropertyType))
+                if (value != GetDefaultValue(property.PropertyType))
                 {
-                    property.SetValue(movie, value1);
-                }
-
-                if (value2 != GetDefaultValue(property.PropertyType))
-                {
-                    property.SetValue(movie, value2);
+                    property.SetValue(movie1, value);
                 }
             }
 
-            return movie;
+            return movie1;
         }
     }
 }
